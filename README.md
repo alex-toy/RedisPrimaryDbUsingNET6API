@@ -4,15 +4,22 @@
 
 ## Packages
 ```
-Microsoft.EntityFrameworkCore.SqlServer
-Microsoft.EntityFrameworkCore.Tools
-Microsoft.AspNetCore.Authentication.JwtBearer
-Microsoft.AspNetCore.Identity.EntityFrameworkCore
-System.IdentityModel.Tokens.Jwt
+Microsoft.Extensions.Caching.StackExchangeRedis
 ```
 
 ## Docker
 ```
 docker compose up -d
 docker compose stop
+```
+
+## Redis
+```
+docker exec -it redis_cache /bin/bash
+redis-cli
+ping
+set key value
+get key
+del key
+exit
 ```
