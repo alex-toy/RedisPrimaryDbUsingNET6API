@@ -23,3 +23,7 @@ get key
 del key
 exit
 ```
+
+## API
+
+<img src="/pictures/api.png" title="API"  width="900">

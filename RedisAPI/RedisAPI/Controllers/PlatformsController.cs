@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RedisAPI.Exceptions;
 using RedisAPI.Models;
 using RedisAPI.RedisRepos;
 
@@ -25,9 +26,15 @@ public class PlatformsController : ControllerBase
     [HttpGet("{id}", Name = "GetPlatformById")]
     public async Task<ActionResult<IEnumerable<Platform>>> GetPlatformById(string id)
     {
-        Platform? platform = await _redisRepo.GetByIdAsync(id);
-        if (platform is not null) return Ok(platform);
-        return NotFound();
+        try
+        {
+            Platform? platform = await _redisRepo.GetByIdAsync(id);
+            return Ok(platform);
+        }
+        catch (UnexistingItem ex)
+        {
+            return NotFound(new { ex.Message, ex.ItemId });
+        }
     }
 
     [HttpPost]
@@ -35,5 +42,35 @@ public class PlatformsController : ControllerBase
     {
         await _redisRepo.CreateAsync(platform);
         return CreatedAtRoute(nameof(GetPlatformById), new { platform.Id }, platform);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(string id, [FromBody] Platform user)
+    {
+        if (id != user.Id) return BadRequest("ID mismatch.");
+
+        try
+        {
+            await _redisRepo.UpdateAsync(user);
+            return Ok();
+        }
+        catch (UnexistingItem ex)
+        {
+            return NotFound(new { ex.Message, ex.ItemId });
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(string id)
+    {
+        try
+        {
+            await _redisRepo.DeleteAsync(id);
+            return Ok();
+        }
+        catch (UnexistingItem ex)
+        {
+            return NotFound(new { ex.Message, ex.ItemId });
+        }
     }
 }

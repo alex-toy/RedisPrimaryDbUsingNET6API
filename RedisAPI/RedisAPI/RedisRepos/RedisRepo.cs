@@ -1,4 +1,5 @@
-﻿using StackExchange.Redis;
+﻿using RedisAPI.Exceptions;
+using StackExchange.Redis;
 using System.Text.Json;
 
 namespace RedisAPI.RedisRepos;
@@ -25,7 +26,7 @@ public class RedisRepo<T> : IRedisRepo<T> where T : RedisData
     public async Task<IEnumerable<T?>> GetAllAsync()
     {
         string prefix = $"{typeof(T)}";
-        RedisResult keys = await _db.ScriptEvaluateAsync("return redis.call('keys', ARGV[1])", new RedisKey[] { prefix }, new RedisValue[] { $"{prefix}:*" });
+        RedisResult keys = await _db.ScriptEvaluateAsync("return redis.call('keys', ARGV[1])", [prefix], [$"{prefix}:*"]);
 
         List<T?> items = new ();
 
@@ -47,8 +48,29 @@ public class RedisRepo<T> : IRedisRepo<T> where T : RedisData
         string key = $"{typeof(T)}:{id}";
         RedisValue data = await _db.StringGetAsync(key);
 
-        if (data.HasValue) return JsonSerializer.Deserialize<T>(data);
+        if (!data.HasValue) throw new UnexistingItem(id);
 
-        return default;
+        return JsonSerializer.Deserialize<T>(data);
+    }
+
+    public async Task UpdateAsync(T item)
+    {
+        string key = $"{typeof(T)}:{item.Id}";
+        bool exists = await _db.KeyExistsAsync(key);
+
+        if (!exists) throw new UnexistingItem(item.Id);
+
+        string serializedItem = JsonSerializer.Serialize(item);
+        await _db.StringSetAsync(key, serializedItem);
+    }
+
+    public async Task DeleteAsync(string id)
+    {
+        string key = $"{typeof(T)}:{id}";
+        bool exists = await _db.KeyExistsAsync(key);
+
+        if (!exists) throw new UnexistingItem(id);
+
+        await _db.KeyDeleteAsync(key);
     }
 }
