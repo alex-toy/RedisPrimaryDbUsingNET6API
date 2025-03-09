@@ -1,6 +1,6 @@
 services:
   redis:
+    container_name: redis_db
     image: redis
-    container_name: redis_cache
     ports:
       - "6379:6379"

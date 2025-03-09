@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RedisAPI.Data;
 using RedisAPI.Models;
+using RedisAPI.RedisRepos;
 
 namespace RedisAPI.Controllers;
 
@@ -8,35 +8,32 @@ namespace RedisAPI.Controllers;
 [ApiController]
 public class PlatformsController : ControllerBase
 {
-    private readonly IPlatformRepo _repository;
+    private readonly IRedisRepo<Platform> _redisRepo;
 
-    public PlatformsController(IPlatformRepo repository)
+    public PlatformsController(IRedisRepo<Platform> repository)
     {
-        _repository = repository;
+        _redisRepo = repository;
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<Platform>> GetPlatforms()
+    public async Task<ActionResult<IEnumerable<Platform>>> GetPlatforms()
     {
-        return Ok(_repository.GetAllPlatforms());
+        IEnumerable<Platform?> platforms = await _redisRepo.GetAllAsync();
+        return Ok(platforms);
     }
 
     [HttpGet("{id}", Name = "GetPlatformById")]
-    public ActionResult<IEnumerable<Platform>> GetPlatformById(string id)
+    public async Task<ActionResult<IEnumerable<Platform>>> GetPlatformById(string id)
     {
-
-        Platform? platform = _repository.GetPlatformById(id);
-
+        Platform? platform = await _redisRepo.GetByIdAsync(id);
         if (platform is not null) return Ok(platform);
-
         return NotFound();
     }
 
     [HttpPost]
-    public ActionResult<Platform> CreatePlatform(Platform platform)
+    public async Task<ActionResult<Platform>> CreatePlatform(Platform platform)
     {
-        _repository.CreatePlatform(platform);
-
-        return CreatedAtRoute(nameof(GetPlatformById), new { Id = platform.Id }, platform);
+        await _redisRepo.CreateAsync(platform);
+        return CreatedAtRoute(nameof(GetPlatformById), new { platform.Id }, platform);
     }
 }
