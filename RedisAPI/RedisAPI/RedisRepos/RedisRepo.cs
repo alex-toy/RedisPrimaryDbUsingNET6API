@@ -45,7 +45,7 @@ public class RedisRepo<T> : IRedisRepo<T> where T : RedisData
 
     public async Task<T?> GetByIdAsync(string id)
     {
-        string key = $"{typeof(T)}:{id}";
+        string key = GetKey(id);
         RedisValue data = await _db.StringGetAsync(key);
 
         if (!data.HasValue) throw new UnexistingItem(id);
@@ -55,7 +55,7 @@ public class RedisRepo<T> : IRedisRepo<T> where T : RedisData
 
     public async Task UpdateAsync(T item)
     {
-        string key = $"{typeof(T)}:{item.Id}";
+        string key = GetKey(item.Id);
         bool exists = await _db.KeyExistsAsync(key);
 
         if (!exists) throw new UnexistingItem(item.Id);
@@ -66,11 +66,16 @@ public class RedisRepo<T> : IRedisRepo<T> where T : RedisData
 
     public async Task DeleteAsync(string id)
     {
-        string key = $"{typeof(T)}:{id}";
+        string key = GetKey(id);
         bool exists = await _db.KeyExistsAsync(key);
 
         if (!exists) throw new UnexistingItem(id);
 
         await _db.KeyDeleteAsync(key);
+    }
+
+    private static string GetKey(string id)
+    {
+        return $"{typeof(T)}:{id}";
     }
 }

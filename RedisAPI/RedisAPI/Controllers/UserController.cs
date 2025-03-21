@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Win32;
 using RedisAPI.Exceptions;
 using RedisAPI.Models;
 using RedisAPI.RedisRepos;
